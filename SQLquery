@@ -1,47 +1,52 @@
---currently available? staff widget ASM
-SELECT user_description,
- h.site_name
-FROM radplus_users u
- INNER JOIN appt_staff_hours h
- ON u.staff_member_id = h.staffid
- AND u.facility = h.facility
- LEFT JOIN (
- --find all staff with appts at current time to exclude them from query
-SELECT *
-FROM appt_data
-WHERE CURRENT_DATE = appointment_date
- AND CURRENT_TIME BETWEEN Cast(appointment_start_time AS TIME)
- AND Cast(appointment_end_time AS TIME))
- AS appt
- ON h.staffid = appt.staffid
- AND h.facility = appt.facility
-WHERE
- --user parameters
- active = 'Yes'
- AND is_staff_member_code = 'Y'
- --hours parameters
- AND h.day_code = {fn dayofweek(current_date)}
- AND hours_expiration_date IS NULL
- AND CURRENT_TIME < Cast(h.staff_end_time AS TIME)
- AND CURRENT_TIME >= Cast(h.staff_start_time AS TIME)
- --subquery appt parameters
- AND appt.staffid IS NULL
- AND ( userrole LIKE '%&AOP&%'
- OR userrole LIKE '%&COP&%' )
-ORDER BY h.siteid,
- user_description
---provider's next appt after current time ASM
-SELECT staffid,
- appointment_date,
- appointment_start_time
-FROM appt_data
-WHERE Cast(appointment_date AS DATE)
- || Cast(appointment_start_time AS TIME) >= CURRENT_DATE
- || CURRENT_TIME
-GROUP BY staffid
-HAVING Cast(appointment_date AS DATE)
- || Cast(appointment_start_time AS TIME) =
- Min(Cast(
- appointment_date AS DATE)
- || Cast(
- appointment_start_time AS TIME))
+--currently available? staff widget ASM 
+SELECT user_description, 
+       h.site_name 
+FROM   radplus_users u 
+       INNER JOIN appt_staff_hours h 
+               ON u.staff_member_id = h.staffid 
+                  AND u.facility = h.facility 
+       LEFT JOIN ( 
+                 --find all staff with appts at current time to exclude them from query 
+                 SELECT * 
+                  FROM   appt_data 
+                  WHERE  CURRENT_DATE = appointment_date 
+                         AND CURRENT_TIME BETWEEN Cast(appointment_start_time AS 
+                                                       TIME) 
+                                                  AND Cast( 
+                                                  appointment_end_time AS TIME)) 
+                 AS 
+                                                        appt 
+              ON h.staffid = appt.staffid 
+                 AND h.facility = appt.facility 
+WHERE 
+  --user parameters 
+  active = 'Yes' 
+  AND is_staff_member_code = 'Y' 
+  --hours parameters 
+  AND h.day_code = {fn dayofweek(current_date)} 
+  AND hours_expiration_date IS NULL 
+  AND CURRENT_TIME < Cast(h.staff_end_time AS TIME) 
+  AND CURRENT_TIME >= Cast(h.staff_start_time AS TIME) 
+  --subquery appt parameters 
+  AND appt.staffid IS NULL 
+  AND ( userrole LIKE '%&AOP&%' 
+         OR userrole LIKE '%&COP&%' ) 
+ORDER  BY h.siteid, 
+          user_description 
+
+--provider's next appt after current time ASM 
+SELECT staffid, 
+       appointment_date, 
+       appointment_start_time 
+FROM   appt_data 
+WHERE  Cast(appointment_date AS DATE) 
+       || Cast(appointment_start_time AS TIME) >= CURRENT_DATE 
+       || CURRENT_TIME 
+GROUP  BY staffid 
+HAVING Cast(appointment_date AS DATE) 
+       || Cast(appointment_start_time AS TIME) = 
+       Min(Cast( 
+       appointment_date AS DATE) 
+                                                     || Cast( 
+           appointment_start_time AS 
+           TIME)) 
